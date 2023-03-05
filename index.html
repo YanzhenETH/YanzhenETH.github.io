@@ -16,152 +16,11 @@
     var s = document.getElementsByTagName('script')[0];
     s.parentNode.insertBefore(wf, s);
 	})();
-/* </script><style id="jetpack-custom-fonts-css">.wf-active body{font-family:"PT Serif",serif}.wf-active button, .wf-active input[type="button"], .wf-active input[type="reset"], .wf-active input[type="submit"]{font-family:"PT Serif",serif}.wf-active pre{font-family:"PT Serif",serif}.wf-active h1, .wf-active h2, .wf-active h3, .wf-active h4, .wf-active h5, .wf-active h6, .wf-active .site-title{font-family:"Abril Fatface",sans-serif;font-style:normal;font-weight:400}.wf-active h1{font-weight:400;font-style:normal}.wf-active h2{font-weight:400;font-style:normal}.wf-active #respond h3, .wf-active h3{font-weight:400;font-style:normal}.wf-active h4{font-weight:400;font-style:normal}.wf-active h5{font-weight:400;font-style:normal}.wf-active h6{font-weight:400;font-style:normal}.wf-active .site-title{font-style:normal;font-weight:400}.wf-active .site-description{font-weight:400;font-style:normal}.wf-active .entry-title{font-style:normal;font-weight:400}.wf-active .page-title{font-style:normal;font-weight:400}.wf-active #respond h3, .wf-active .comments-title{font-style:normal;font-weight:400}.wf-active .widget-title{font-weight:400;font-style:normal}@media screen and (min-width: 50em){.wf-active h1{font-weight:400;font-style:normal}}@media screen and (min-width: 50em){.wf-active h2{font-weight:400;font-style:normal}}@media screen and (min-width: 50em){.wf-active #respond h3, .wf-active h3{font-weight:400;font-style:normal}}@media screen and (min-width: 50em){.wf-active h4{font-weight:400;font-style:normal}}@media screen and (min-width: 50em){.wf-active .entry-title{font-style:normal;font-weight:400}}</style> */
-<meta name='robots' content='max-image-preview:large' /> -->
-
-<!-- Async WordPress.com Remote Login -->
-<script id="wpcom_remote_login_js">
-var wpcom_remote_login_extra_auth = '';
-function wpcom_remote_login_remove_dom_node_id( element_id ) {
-	var dom_node = document.getElementById( element_id );
-	if ( dom_node ) { dom_node.parentNode.removeChild( dom_node ); }
-}
-function wpcom_remote_login_remove_dom_node_classes( class_name ) {
-	var dom_nodes = document.querySelectorAll( '.' + class_name );
-	for ( var i = 0; i < dom_nodes.length; i++ ) {
-		dom_nodes[ i ].parentNode.removeChild( dom_nodes[ i ] );
-	}
-}
-function wpcom_remote_login_final_cleanup() {
-	wpcom_remote_login_remove_dom_node_classes( "wpcom_remote_login_msg" );
-	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_key" );
-	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_validate" );
-	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_js" );
-	wpcom_remote_login_remove_dom_node_id( "wpcom_request_access_iframe" );
-	wpcom_remote_login_remove_dom_node_id( "wpcom_request_access_styles" );
-}
-
-// Watch for messages back from the remote login
-window.addEventListener( "message", function( e ) {
-	if ( e.origin === "https://r-login.wordpress.com" ) {
-		var data = {};
-		try {
-			data = JSON.parse( e.data );
-		} catch( e ) {
-			wpcom_remote_login_final_cleanup();
-			return;
-		}
-
-		if ( data.msg === 'LOGIN' ) {
-			// Clean up the login check iframe
-			wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_key" );
-
-			var id_regex = new RegExp( /^[0-9]+$/ );
-			var token_regex = new RegExp( /^.*|.*|.*$/ );
-			if (
-				token_regex.test( data.token )
-				&& id_regex.test( data.wpcomid )
-			) {
-				// We have everything we need to ask for a login
-				var script = document.createElement( "script" );
-				script.setAttribute( "id", "wpcom_remote_login_validate" );
-				script.src = '/remote-login.php?wpcom_remote_login=validate'
-					+ '&wpcomid=' + data.wpcomid
-					+ '&token=' + encodeURIComponent( data.token )
-					+ '&host=' + window.location.protocol
-					+ '//' + window.location.hostname
-					+ '&postid=245'
-					+ '&is_singular=';
-				document.body.appendChild( script );
-			}
-
-			return;
-		}
-
-		// Safari ITP, not logged in, so redirect
-		if ( data.msg === 'LOGIN-REDIRECT' ) {
-			window.location = 'https://wordpress.com/log-in?redirect_to=' + window.location.href;
-			return;
-		}
-
-		// Safari ITP, storage access failed, remove the request
-		if ( data.msg === 'LOGIN-REMOVE' ) {
-			var css_zap = 'html { -webkit-transition: margin-top 1s; transition: margin-top 1s; } /* 9001 */ html { margin-top: 0 !important; } * html body { margin-top: 0 !important; } @media screen and ( max-width: 782px ) { html { margin-top: 0 !important; } * html body { margin-top: 0 !important; } }';
-			var style_zap = document.createElement( 'style' );
-			style_zap.type = 'text/css';
-			style_zap.appendChild( document.createTextNode( css_zap ) );
-			document.body.appendChild( style_zap );
-
-			var e = document.getElementById( 'wpcom_request_access_iframe' );
-			e.parentNode.removeChild( e );
-
-			document.cookie = 'wordpress_com_login_access=denied; path=/; max-age=31536000';
-
-			return;
-		}
-
-		// Safari ITP
-		if ( data.msg === 'REQUEST_ACCESS' ) {
-			console.log( 'request access: safari' );
-
-			// Check ITP iframe enable/disable knob
-			if ( wpcom_remote_login_extra_auth !== 'safari_itp_iframe' ) {
-				return;
-			}
-
-			// If we are in a "private window" there is no ITP.
-			var private_window = false;
-			try {
-				var opendb = window.openDatabase( null, null, null, null );
-			} catch( e ) {
-				private_window = true;
-			}
-
-			if ( private_window ) {
-				console.log( 'private window' );
-				return;
-			}
-
-			var iframe = document.createElement( 'iframe' );
-			iframe.id = 'wpcom_request_access_iframe';
-			iframe.setAttribute( 'scrolling', 'no' );
-			iframe.setAttribute( 'sandbox', 'allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-top-navigation-by-user-activation' );
-			iframe.src = 'https://r-login.wordpress.com/remote-login.php?wpcom_remote_login=request_access&origin=' + encodeURIComponent( data.origin ) + '&wpcomid=' + encodeURIComponent( data.wpcomid );
-
-			var css = 'html { -webkit-transition: margin-top 1s; transition: margin-top 1s; } /* 9001 */ html { margin-top: 46px !important; } * html body { margin-top: 46px !important; } @media screen and ( max-width: 660px ) { html { margin-top: 71px !important; } * html body { margin-top: 71px !important; } #wpcom_request_access_iframe { display: block; height: 71px !important; } } #wpcom_request_access_iframe { border: 0px; height: 46px; position: fixed; top: 0; left: 0; width: 100%; min-width: 100%; z-index: 99999; background: #23282d; } ';
-
-			var style = document.createElement( 'style' );
-			style.type = 'text/css';
-			style.id = 'wpcom_request_access_styles';
-			style.appendChild( document.createTextNode( css ) );
-			document.body.appendChild( style );
-
-			document.body.appendChild( iframe );
-		}
-
-		if ( data.msg === 'DONE' ) {
-			wpcom_remote_login_final_cleanup();
-		}
-	}
-}, false );
-
-// Inject the remote login iframe after the page has had a chance to load
-// more critical resources
-window.addEventListener( "DOMContentLoaded", function( e ) {
-	var iframe = document.createElement( "iframe" );
-	iframe.style.display = "none";
-	iframe.setAttribute( "scrolling", "no" );
-	iframe.setAttribute( "id", "wpcom_remote_login_key" );
-	iframe.src = "https://r-login.wordpress.com/remote-login.php"
-		+ "?wpcom_remote_login=key"
-		+ "&origin=aHR0cHM6Ly9ocmxpYW5nbWF0aC5vcmc%3D"
-		+ "&wpcomid=211228785"
-		+ "&time=1678016505";
-	document.body.appendChild( iframe );
-}, false );
-</script>
+</script><style id="jetpack-custom-fonts-css">.wf-active body{font-family:"PT Serif",serif}.wf-active button, .wf-active input[type="button"], .wf-active input[type="reset"], .wf-active input[type="submit"]{font-family:"PT Serif",serif}.wf-active pre{font-family:"PT Serif",serif}.wf-active h1, .wf-active h2, .wf-active h3, .wf-active h4, .wf-active h5, .wf-active h6, .wf-active .site-title{font-family:"Abril Fatface",sans-serif;font-style:normal;font-weight:400}.wf-active h1{font-weight:400;font-style:normal}.wf-active h2{font-weight:400;font-style:normal}.wf-active #respond h3, .wf-active h3{font-weight:400;font-style:normal}.wf-active h4{font-weight:400;font-style:normal}.wf-active h5{font-weight:400;font-style:normal}.wf-active h6{font-weight:400;font-style:normal}.wf-active .site-title{font-style:normal;font-weight:400}.wf-active .site-description{font-weight:400;font-style:normal}.wf-active .entry-title{font-style:normal;font-weight:400}.wf-active .page-title{font-style:normal;font-weight:400}.wf-active #respond h3, .wf-active .comments-title{font-style:normal;font-weight:400}.wf-active .widget-title{font-weight:400;font-style:normal}@media screen and (min-width: 50em){.wf-active h1{font-weight:400;font-style:normal}}@media screen and (min-width: 50em){.wf-active h2{font-weight:400;font-style:normal}}@media screen and (min-width: 50em){.wf-active #respond h3, .wf-active h3{font-weight:400;font-style:normal}}@media screen and (min-width: 50em){.wf-active h4{font-weight:400;font-style:normal}}@media screen and (min-width: 50em){.wf-active .entry-title{font-style:normal;font-weight:400}}</style>
+<meta name='robots' content='max-image-preview:large' />
 <link rel='dns-prefetch' href='//s0.wp.com' />
 <link rel='dns-prefetch' href='//hrliangmath.wordpress.com' />
+<link rel='dns-prefetch' href='//wordpress.com' />
 <link href='https://fonts.gstatic.com' crossorigin rel='preconnect' />
 <link rel="alternate" type="application/rss+xml" title="远眺 &raquo; Feed" href="https://hrliangmath.org/feed/" />
 <link rel="alternate" type="application/rss+xml" title="远眺 &raquo; Comments Feed" href="https://hrliangmath.org/comments/feed/" />
@@ -199,7 +58,7 @@ img.emoji {
 	padding: 0 !important;
 }
 </style>
-	<link crossorigin='anonymous' rel='stylesheet' id='all-css-0-1' href='https://s0.wp.com/_static/??-eJyNkVFuAjEMRC/UrLUIul+oZ0myVmpqZ6M4AeX2BCqqLS20P5HG1kyebTgl45dYMBaQahLXQFHhlPwiRoUY250avOoLrGw3T6hdOsyhdzLCcdwNm2ELrhLP4HjxH4bJZZsbaGmMX0EUPdcZFQ4KgjNZZJQr0Eoktg2zYQzWt0Eo/m3vvbX+ZnoMfyXtYViSvSDbttRiQqb5DvvfEdkWikEfTd0L4NmqkjflvaPqr6Sr61z22+uS7M8hn9g+z+hcyqhq+itU5fZl973Jfnydpmkct5vpcAZnNspb?cssminify=yes' type='text/css' media='all' />
+	<link crossorigin='anonymous' rel='stylesheet' id='all-css-0-1' href='https://s0.wp.com/_static/??-eJyNUltywyAMvFAx40xaf3V6FsCqrUQ8BkFS375K0nicl6c/DCtpVyuEPiblYigQivZVJaoDBtbH5KJX7JFgukONY37Tz2lcLbuMqWAU9B2J4nGtfowHyMpWawmEXSaCuRyDo9pLWAK6NzyiCHDjMTyW7FgXye9t/JkvD32vTYcq0EIeJJNBH9r3ZtNsta1IvbYU3V4R2mzy9MqRtPPQowECf55oARKZSWYiGIybXrq9oUtuiW9Ir82fnYoYlGROls0Ua1FDxv7O9r8lsikYhtU9ODLM6FQZxSo/dbpYr+mlQFmT/37QjC8k1CGW81bny5raaVsS98k8PtkK7dLa2pSBWcnpsfrrAML78p/tR9d1bbvddLtfNpwngA==?cssminify=yes' type='text/css' media='all' />
 <style id='wp-block-library-inline-css'>
 .has-text-align-justify {
 	text-align:justify;
@@ -208,27 +67,50 @@ img.emoji {
 	background-size: cover;
 }
 </style>
+<style id='wpcom-admin-bar-inline-css'>
+
+			.admin-bar {
+				position: inherit !important;
+				top: auto !important;
+			}
+			.admin-bar .goog-te-banner-frame {
+				top: 32px !important
+			}
+			@media screen and (max-width: 782px) {
+				.admin-bar .goog-te-banner-frame {
+					top: 46px !important;
+				}
+			}
+			@media screen and (max-width: 480px) {
+				.admin-bar .goog-te-banner-frame {
+					position: absolute;
+				}
+			}
+		
+</style>
 <style id='global-styles-inline-css'>
 body{--wp--preset--shadow--natural: 6px 6px 9px rgba(0, 0, 0, 0.2);--wp--preset--shadow--deep: 12px 12px 50px rgba(0, 0, 0, 0.4);--wp--preset--shadow--sharp: 6px 6px 0px rgba(0, 0, 0, 0.2);--wp--preset--shadow--outlined: 6px 6px 0px -3px rgba(255, 255, 255, 1), 6px 6px rgba(0, 0, 0, 1);--wp--preset--shadow--crisp: 6px 6px 0px rgba(0, 0, 0, 1);--wp--preset--color--black: #000000;--wp--preset--color--cyan-bluish-gray: #abb8c3;--wp--preset--color--white: #fff;--wp--preset--color--pale-pink: #f78da7;--wp--preset--color--vivid-red: #cf2e2e;--wp--preset--color--luminous-vivid-orange: #ff6900;--wp--preset--color--luminous-vivid-amber: #fcb900;--wp--preset--color--light-green-cyan: #7bdcb5;--wp--preset--color--vivid-green-cyan: #00d084;--wp--preset--color--pale-cyan-blue: #8ed1fc;--wp--preset--color--vivid-cyan-blue: #0693e3;--wp--preset--color--vivid-purple: #9b51e0;--wp--preset--color--dark-green: #1c7c7c;--wp--preset--color--dark-gray: #666;--wp--preset--color--medium-gray: #999;--wp--preset--color--light-gray: #eee;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple: linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan: linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange: linear-gradient(135deg,rgba(252,185,0,1) 0%,rgba(255,105,0,1) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red: linear-gradient(135deg,rgba(255,105,0,1) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray: linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum: linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple: linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux: linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk: linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean: linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass: linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight: linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--duotone--dark-grayscale: url('#wp-duotone-dark-grayscale');--wp--preset--duotone--grayscale: url('#wp-duotone-grayscale');--wp--preset--duotone--purple-yellow: url('#wp-duotone-purple-yellow');--wp--preset--duotone--blue-red: url('#wp-duotone-blue-red');--wp--preset--duotone--midnight: url('#wp-duotone-midnight');--wp--preset--duotone--magenta-yellow: url('#wp-duotone-magenta-yellow');--wp--preset--duotone--purple-green: url('#wp-duotone-purple-green');--wp--preset--duotone--blue-orange: url('#wp-duotone-blue-orange');--wp--preset--font-size--small: 13px;--wp--preset--font-size--medium: 20px;--wp--preset--font-size--large: 36px;--wp--preset--font-size--x-large: 42px;--wp--preset--font-family--albert-sans: 'Albert Sans';--wp--preset--font-family--alegreya: Alegreya;--wp--preset--font-family--arvo: Arvo;--wp--preset--font-family--bodoni-moda: 'Bodoni Moda';--wp--preset--font-family--cabin: Cabin;--wp--preset--font-family--chivo: Chivo;--wp--preset--font-family--commissioner: Commissioner;--wp--preset--font-family--cormorant: Cormorant;--wp--preset--font-family--courier-prime: 'Courier Prime';--wp--preset--font-family--crimson-pro: 'Crimson Pro';--wp--preset--font-family--dm-mono: 'DM Mono';--wp--preset--font-family--dm-sans: 'DM Sans';--wp--preset--font-family--domine: Domine;--wp--preset--font-family--eb-garamond: 'EB Garamond';--wp--preset--font-family--epilogue: Epilogue;--wp--preset--font-family--figtree: Figtree;--wp--preset--font-family--fira-sans: 'Fira Sans';--wp--preset--font-family--fraunces: Fraunces;--wp--preset--font-family--ibm-plex-mono: 'IBM Plex Mono';--wp--preset--font-family--ibm-plex-sans: 'IBM Plex Sans';--wp--preset--font-family--inter: Inter;--wp--preset--font-family--josefin-sans: 'Josefin Sans';--wp--preset--font-family--jost: Jost;--wp--preset--font-family--libre-baskerville: 'Libre Baskerville';--wp--preset--font-family--libre-franklin: 'Libre Franklin';--wp--preset--font-family--literata: Literata;--wp--preset--font-family--lora: Lora;--wp--preset--font-family--merriweather: Merriweather;--wp--preset--font-family--montserrat: Montserrat;--wp--preset--font-family--newsreader: Newsreader;--wp--preset--font-family--nunito: Nunito;--wp--preset--font-family--open-sans: 'Open Sans';--wp--preset--font-family--overpass: Overpass;--wp--preset--font-family--petrona: Petrona;--wp--preset--font-family--piazzolla: Piazzolla;--wp--preset--font-family--playfair-display: 'Playfair Display';--wp--preset--font-family--plus-jakarta-sans: 'Plus Jakarta Sans';--wp--preset--font-family--poppins: Poppins;--wp--preset--font-family--raleway: Raleway;--wp--preset--font-family--roboto-slab: 'Roboto Slab';--wp--preset--font-family--roboto: Roboto;--wp--preset--font-family--rubik: Rubik;--wp--preset--font-family--sora: Sora;--wp--preset--font-family--source-sans-pro: 'Source Sans Pro';--wp--preset--font-family--source-serif-pro: 'Source Serif Pro';--wp--preset--font-family--space-mono: 'Space Mono';--wp--preset--font-family--texturina: Texturina;--wp--preset--font-family--work-sans: 'Work Sans';--wp--preset--spacing--20: 0.44rem;--wp--preset--spacing--30: 0.67rem;--wp--preset--spacing--40: 1rem;--wp--preset--spacing--50: 1.5rem;--wp--preset--spacing--60: 2.25rem;--wp--preset--spacing--70: 3.38rem;--wp--preset--spacing--80: 5.06rem;}:where(.is-layout-flex){gap: 0.5em;}body .is-layout-flow > .alignleft{float: left;margin-inline-start: 0;margin-inline-end: 2em;}body .is-layout-flow > .alignright{float: right;margin-inline-start: 2em;margin-inline-end: 0;}body .is-layout-flow > .aligncenter{margin-left: auto !important;margin-right: auto !important;}body .is-layout-constrained > .alignleft{float: left;margin-inline-start: 0;margin-inline-end: 2em;}body .is-layout-constrained > .alignright{float: right;margin-inline-start: 2em;margin-inline-end: 0;}body .is-layout-constrained > .aligncenter{margin-left: auto !important;margin-right: auto !important;}body .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alignfull)){max-width: var(--wp--style--global--content-size);margin-left: auto !important;margin-right: auto !important;}body .is-layout-constrained > .alignwide{max-width: var(--wp--style--global--wide-size);}body .is-layout-flex{display: flex;}body .is-layout-flex{flex-wrap: wrap;align-items: center;}body .is-layout-flex > *{margin: 0;}:where(.wp-block-columns.is-layout-flex){gap: 2em;}.has-black-color{color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-color{color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-color{color: var(--wp--preset--color--white) !important;}.has-pale-pink-color{color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-color{color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-color{color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-color{color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-color{color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-color{color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-color{color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-color{color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-color{color: var(--wp--preset--color--vivid-purple) !important;}.has-black-background-color{background-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-background-color{background-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-background-color{background-color: var(--wp--preset--color--white) !important;}.has-pale-pink-background-color{background-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-background-color{background-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-background-color{background-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-background-color{background-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-background-color{background-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-background-color{background-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-background-color{background-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-background-color{background-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-background-color{background-color: var(--wp--preset--color--vivid-purple) !important;}.has-black-border-color{border-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-border-color{border-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-border-color{border-color: var(--wp--preset--color--white) !important;}.has-pale-pink-border-color{border-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-border-color{border-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-border-color{border-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-border-color{border-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-border-color{border-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-border-color{border-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-border-color{border-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-border-color{border-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-border-color{border-color: var(--wp--preset--color--vivid-purple) !important;}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background: var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple) !important;}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background: var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan) !important;}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange) !important;}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red) !important;}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background: var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray) !important;}.has-cool-to-warm-spectrum-gradient-background{background: var(--wp--preset--gradient--cool-to-warm-spectrum) !important;}.has-blush-light-purple-gradient-background{background: var(--wp--preset--gradient--blush-light-purple) !important;}.has-blush-bordeaux-gradient-background{background: var(--wp--preset--gradient--blush-bordeaux) !important;}.has-luminous-dusk-gradient-background{background: var(--wp--preset--gradient--luminous-dusk) !important;}.has-pale-ocean-gradient-background{background: var(--wp--preset--gradient--pale-ocean) !important;}.has-electric-grass-gradient-background{background: var(--wp--preset--gradient--electric-grass) !important;}.has-midnight-gradient-background{background: var(--wp--preset--gradient--midnight) !important;}.has-small-font-size{font-size: var(--wp--preset--font-size--small) !important;}.has-medium-font-size{font-size: var(--wp--preset--font-size--medium) !important;}.has-large-font-size{font-size: var(--wp--preset--font-size--large) !important;}.has-x-large-font-size{font-size: var(--wp--preset--font-size--x-large) !important;}
 :where(.wp-block-columns.is-layout-flex){gap: 2em;}
 .wp-block-pullquote{font-size: 1.5em;line-height: 1.6;}
 .wp-block-navigation a:where(:not(.wp-element-button)){color: inherit;}
 </style>
-<link crossorigin='anonymous' rel='stylesheet' id='all-css-2-1' href='./??-eJyNkM0KAjEMhF/IGirSxYP4LN0Qu9X+0aQsvr1d1IMI0tsMzDcZAmtRmJNQEpCFIjGUNkOhxFit4KIOgMxQiUn2Xe1ggGB5BBpOb/1zyHjnYcQnfB1Ra8Ecf7jYVAnN+cTgKKtebsXn9GXUNVhf/6GV+izXpXv/4GM36BLP2hijp6OeTrcnoFN5Kg==?cssminify=yes' type='text/css' media='all' /> --> -->
-<link crossorigin='anonymous' rel='stylesheet' id='print-css-3-1' href='https://s0.wp.com/wp-content/mu-plugins/global-print/global-print.css?m=1465851035h&cssminify=yes' type='text/css' media='print' /> --> -->
-<!-- <link crossorigin='anonymous' rel='stylesheet' id='all-css-2-1' href='./IGirSxYP4LN0Qu9X+0aQsvr1d1IMI0tsMzDcZAmtRmJNQEpCFIjGUNkOhxFit4KIOgMxQiUn2Xe1ggGB5BBpOb/1zyHjnYcQnfB1Ra8Ecf7jYVAnN+cTgKKtebsXn9GXUNVhf/6GV+izXpXv/4GM36BLP2hijp6OeTrcnoFN5Kg==?cssminify=yes' type='text/css' media='all' /> -->
-<!-- <link crossorigin='anonymous' rel='stylesheet' id='print-css-3-1' href='./home_l218' type='text/css' media='print' /> -->
+<link crossorigin='anonymous' rel='stylesheet' id='all-css-2-1' href='https://s0.wp.com/_static/??-eJyNkFELwjAMhP+QMWzIhg/ib+lqtlXbpjSZw39vh/qgwtjbHdx3R4JzAstRKSrqSIEE09Rhoig2G7Uj1GhFMJOQ7ova4QZC9OFpc3rp7zzbm2xGXLSvEZiT5fDHhQmSnwYXBQdiKOVGHccvA703Lq+hkbWMm0twETqT4V6vpTOVI4Yih/fHPnYNUhbIlDgr9JzDr1/QczhVTdNU7aFqj9cnAp2gkQ==?cssminify=yes' type='text/css' media='all' />
+<link crossorigin='anonymous' rel='stylesheet' id='print-css-3-1' href='https://s0.wp.com/wp-content/mu-plugins/global-print/global-print.css?m=1465851035h&cssminify=yes' type='text/css' media='print' />
+<link crossorigin='anonymous' rel='stylesheet' id='all-css-4-1' href='https://s0.wp.com/wp-content/mu-plugins/admin-bar/masterbar-overrides/masterbar.css?m=1664555514h&cssminify=yes' type='text/css' media='all' />
 <style id='jetpack-global-styles-frontend-style-inline-css'>
 @import url('https://fonts-api.wp.com/css?family=Roboto:thin,extralight,light,regular,medium,semibold,bold,italic,bolditalic,extrabold,black|Rubik:thin,extralight,light,regular,medium,semibold,bold,italic,bolditalic,extrabold,black|');:root { --font-headings: Rubik; --font-base: Roboto; --font-headings-default: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif; --font-base-default: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;}
 </style>
 <link crossorigin='anonymous' rel='stylesheet' id='all-css-6-1' href='https://s0.wp.com/wp-content/themes/h4/global.css?m=1420737423h&cssminify=yes' type='text/css' media='all' />
-<script id='wpcom-actionbar-placeholder-js-extra'>
-var actionbardata = {"siteID":"211228785","siteURL":"https:\/\/hrliangmath.org","xhrURL":"https:\/\/hrliangmath.org\/wp-admin\/admin-ajax.php","nonce":"10f881507c","isLoggedIn":"","statusMessage":"","subsEmailDefault":"instantly","proxyScriptUrl":"https:\/\/s0.wp.com\/wp-content\/js\/wpcom-proxy-request.js?ver=20211021","i18n":{"followedText":"New posts from this site will now appear in your <a href=\"https:\/\/wordpress.com\/read\">Reader<\/a>","foldBar":"Collapse this bar","unfoldBar":"Expand this bar"}};
+<script id='notes-rest-common-js-extra'>
+var wpNotesArgs = {"cacheBuster":"calypso-4917-8966-g5f8b6d6bc2","iframeUrl":"https:\/\/widgets.wp.com\/notifications\/","iframeAppend":"2","iframeScroll":"no","wide":"1"};
 </script>
-<script crossorigin='anonymous' type='text/javascript' src='https://s0.wp.com/_static/??-eJyFissOQDAQRX/IKInoSnyLx5Bp2inTNvh7JCys3M1J7jlqW2DwHJGjMkE535NFSAGlm68PiCefm5Cpbyc2wiJ+P15HPNg0YrilWRPK8SB3xL8ROJqli/jErWvKWutCX6vMCY9/O5o='></script>
+<script id='wpcom-actionbar-placeholder-js-extra'>
+var actionbardata = {"siteID":"211228785","siteURL":"https:\/\/hrliangmath.org","xhrURL":"https:\/\/hrliangmath.org\/wp-admin\/admin-ajax.php","nonce":"4ed5053ca6","isLoggedIn":"1","statusMessage":"","subsEmailDefault":"instantly","proxyScriptUrl":"https:\/\/s0.wp.com\/wp-content\/js\/wpcom-proxy-request.js?ver=20211021","i18n":{"followedText":"New posts from this site will now appear in your <a href=\"https:\/\/wordpress.com\/read\">Reader<\/a>","foldBar":"Collapse this bar","unfoldBar":"Expand this bar"}};
+</script>
+<script crossorigin='anonymous' type='text/javascript' src='https://s0.wp.com/_static/??-eJyNkNsOwjAIhl/Irmqixgvjs7Qdm50tVGjVvb01emHMPCQEAnwBfvQlKY8ulBZED9VOBXh8hiZ6bAaZ6W+Qir5nk+EVdoQZMOtYVAql9yhaihXHPmVPNesoBLq843V0JOsDqCLApq+1urejCY5DVonpOk7dJ+mPu5tPVMEWWBwxfNJvjTtawknJdw1FsnEH+PINpAxPX9sxEqrz8idv2rpQWcMPeB93i/Vms1osV9v5cAO4U6nY'></script>
 <script type='text/javascript'>
 	window.addEventListener( 'DOMContentLoaded', function() {
-		rltInitialize( {"token":null,"iframeOrigins":["https:\/\/widgets.wp.com"]} );
+		rltInitialize( {"token":"rlt-MnxsNXFuZjVSSVM0cFFaZXhPM3BpMTJWYm03bmRxb2dHWk12U2NZbTF3aUhoSmJabHRvVG9LSkF4OWlLWklDQ1hucTl5RnUzNWx1aHo1S01mM2hjdlB6RWliRnh5cHVWVzlyWFBUbWNlVkhGdXBjQ1BRcXRhSEVDcEg3VVU0ZURRV1VpSVBQSHp5aCtEeFRXQlhTY3p0aTBPRzhrUWFiajM2ZzVoZ2l2VWZmTXFhTmY2eXlubHhKcHQ1ZVlBNnF0bklLYnlxaGZGdm9HeDlIYUhhdlFOOThFK0E0RXlZemVDWGwzSnU1SnczejdNZm45dHJ3TjY5VGNFYjB4NUR1ejhyQ25lQ3I0bTZ5eXZDV0lUNm1EekFhS2tLaEVqTjMzejBKN1diOXk0MUNRaThwQWJUT1VCcmtuVT18YjExMjJhOWIyY2UxNTMzZTRjYzE1MzJmMDIxZDg5YTJmYWJiOGMzMDg1ZWVjNGRlfDdlYTY2ZGNmNGM2MTkxMzkxYTUzNTU2OGM0ZjNmYjEzMmVmZTYzOGVmZjZjMzgzYTUzOTc5Y2U1NTkwOTZhN2U2ZjRjYTRmZGVhNTYzNGNmZWJjMzg3MWU0MGM2M2VmZWZlNjU1MGJjNjY3NzVlNDA0ZmRhYTFkYmRkZWI2Yzdh","iframeOrigins":["https:\/\/widgets.wp.com"]} );
 	} );
 </script>
 <link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://hrliangmath.wordpress.com/xmlrpc.php?rsd" />
@@ -251,9 +133,16 @@ var actionbardata = {"siteID":"211228785","siteURL":"https:\/\/hrliangmath.org",
 <link rel="search" type="application/opensearchdescription+xml" href="https://hrliangmath.org/osd.xml" title="远眺" />
 <link rel="search" type="application/opensearchdescription+xml" href="https://s1.wp.com/opensearch.xml" title="WordPress.com" />
 <meta name="theme-color" content="#c8dee5" />
-<meta name="application-name" content="远眺" /><meta name="msapplication-window" content="width=device-width;height=device-height" /><meta name="msapplication-tooltip" content="我的数学与文学、艺术之旅" /><meta name="msapplication-task" content="name=Subscribe;action-uri=https://hrliangmath.org/feed/;icon-uri=https://hrliangmath.files.wordpress.com/2022/10/cropped-circle-limit-i-m.-c.-escher-1.jpg?w=16" /><meta name="msapplication-task" content="name=Sign up for a free blog;action-uri=http://wordpress.com/signup/;icon-uri=https://s0.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Support;action-uri=http://support.wordpress.com/;icon-uri=https://s0.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Forums;action-uri=http://forums.wordpress.com/;icon-uri=https://s0.wp.com/i/favicon.ico" /><meta name="description" content="我的数学与文学、艺术之旅" />
+<meta name="application-name" content="远眺" /><meta name="msapplication-window" content="width=device-width;height=device-height" /><meta name="msapplication-tooltip" content="我的数学与文学、艺术之旅" /><meta name="msapplication-task" content="name=Subscribe;action-uri=https://hrliangmath.org/feed/;icon-uri=https://hrliangmath.files.wordpress.com/2022/10/cropped-circle-limit-i-m.-c.-escher-1.jpg?w=16" /><meta name="msapplication-task" content="name=Read Freshly Pressed;action-uri=http://wordpress.com/#fresh;icon-uri=https://s0.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Support;action-uri=http://support.wordpress.com/;icon-uri=https://s0.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Forums;action-uri=http://forums.wordpress.com/;icon-uri=https://s0.wp.com/i/favicon.ico" /><meta name="description" content="我的数学与文学、艺术之旅" />
 <style type="text/css" id="custom-background-css">
 body.custom-background { background-color: #c8dee5; }
+</style>
+	<style type="text/css" media="print">#wpadminbar { display:none; }</style>
+	<style type="text/css" media="screen">
+	html { margin-top: 32px !important; }
+	@media screen and ( max-width: 782px ) {
+		html { margin-top: 46px !important; }
+	}
 </style>
 	<style type="text/css" id="custom-colors-css">	.widget a:hover,
 	.site-footer .widget a:hover {
@@ -276,7 +165,7 @@ a, a:visited, .site-footer a:hover, .main-navigation li:hover > a, .current_page
 <!-- Your Google Analytics Plugin is missing the tracking ID -->
 </head>
 
-<body class="blog custom-background wp-custom-logo wp-embed-responsive customizer-styles-applied no-sidebar highlander-enabled highlander-light custom-colors">
+<body class="blog logged-in admin-bar no-customize-support custom-background wp-custom-logo wp-embed-responsive customizer-styles-applied no-sidebar jetpack-reblog-enabled highlander-enabled highlander-light custom-colors">
 <div id="page" class="hfeed site">
 	<a class="skip-link screen-reader-text" href="#content">Skip to content</a>
 	<header id="masthead" class="site-header" role="banner">
@@ -368,9 +257,75 @@ a, a:visited, .site-footer a:hover, .main-navigation li:hover > a, .current_page
 </div><!-- #page -->
 
 <!--  -->
+	<script type="text/javascript">
+	/* <![CDATA[ */
+		jQuery(document).ready( function($) {
+			function doFollowingHover() {
+				$('#wp-admin-bar-follow > a').unbind( '.unfollow' );
+
+				$('#wp-admin-bar-follow > a').bind( 'mouseover.unfollow', function() {
+
+					$(this).html( "Unfollow" ).parent( 'li' ).addClass( 'unfollow' );
+				});
+				$('#wp-admin-bar-follow > a').bind( 'mouseout.unfollow', function() {
+					$(this).html( "Following" ).parent( 'li' ).removeClass( 'unfollow' );
+				});
+			}
+			
+			$('#wp-admin-bar-follow > a').click( function( e ) {
+				$('#wp-admin-bar-follow > a').unbind( '.unfollow' );
+
+				e.preventDefault();
+
+				var link = $( this ), li = $( '#wp-admin-bar-follow' ), timeout = 0;
+
+				if ( li.hasClass( 'subscribed' ) ) {
+					li.removeClass( 'subscribed' ).removeClass( 'unfollow' );
+					link.html( "Follow" );
+
+					$('body').append( $( 'div.wpcom-bubble' ).removeClass( 'fadein' ) ).off( 'click.bubble' );
+
+					var action = 'ab_unsubscribe_from_blog';
+				} else {
+					li.addClass( 'subscribed' ).removeClass( 'unfollow' );
+					link.html( "Following" );
+
+						var left = 131 - link.width();
+						li.append( $( 'div.wpcom-bubble' ).css( { left: '-' + left + 'px' } ) );
+						$( 'div.bubble-txt', 'div.wpcom-bubble' ).html( "New posts from this blog will now appear in \u003Ca target=\u0022_blank\u0022 href=\u0022http:\/\/wordpress.com\/\u0022\u003Eyour reader\u003C\/a\u003E. You can manage email alerts from your \u003Ca target=\u0022_blank\u0022 href=\u0022http:\/\/wordpress.com\/following\/edit\/\u0022\u003Esubscriptions page\u003C\/a\u003E." );
+
+						$( 'div.wpcom-bubble.action-bubble' ).addClass( 'fadein' );
+
+						setTimeout( function() {
+							$('body').on( 'click.bubble touchstart.bubble', function(e) {
+								if ( !$(e.target).hasClass('wpcom-bubble') && !$(e.target).parents( 'div.wpcom-bubble' ).length )
+									hideBubble();
+							});
+							setTimeout( hideBubble, 15000 );
+						}, 500 );
+
+					var action = 'ab_subscribe_to_blog';
+					$('#wp-admin-bar-follow > a').bind( 'mouseout.shift', function() {
+						doFollowingHover();
+						$(this).unbind( '.shift' );
+					});
+				}
+
+				var nonce = link.attr( 'href' ).split( '_wpnonce=' );
+				nonce = nonce[1];
+
+				$.post( "https:\/\/hrliangmath.org\/wp-admin\/admin-ajax.php", {
+					'action': action,
+					'_wpnonce': nonce,
+					'source': 'admin_bar',
+					'blog_id': 211228785				});
+			});
+		});
+	/* ]]> */
+	</script>
 <script src='//0.gravatar.com/js/gprofiles.js?ver=202309z' id='grofiles-cards-js'></script>
 <script id='wpgroho-js-extra'>
-var WPGroHo = {"my_hash":""};
+var WPGroHo = {"my_hash":"7da249f715c2213abcc1e95ef456b798"};
 </script>
 <script crossorigin='anonymous' type='text/javascript' src='https://s0.wp.com/wp-content/mu-plugins/gravatar-hovercards/wpgroho.js?m=1610363240h'></script>
 
@@ -404,7 +359,7 @@ var WPGroHo = {"my_hash":""};
 
 		<div style="display:none">
 	</div>
-	<div id="actionbar" style="display: none;"
+<div id="report-form-window" style="display:none;"></div>	<div id="actionbar" style="display: none;"
 			class="actnbr-pub-penscratch-2 actnbr-has-follow">
 		<ul>
 								<li class="actnbr-btn actnbr-hidden">
@@ -422,23 +377,51 @@ var WPGroHo = {"my_hash":""};
 			<a href="https://hrliangmath.org">
 				<img alt='' src='https://hrliangmath.files.wordpress.com/2022/10/cropped-circle-limit-i-m.-c.-escher-1.jpg?w=50' class='avatar avatar-50' height='50' width='50' />				远眺			</a>
 		</li>
-										<form method="post" action="https://subscribe.wordpress.com" accept-charset="utf-8" style="display: none;">
-																				<div>
-										<input type="email" name="email" placeholder="Enter your email address" class="actnbr-email-field" aria-label="Enter your email address" />
+										<div class="actnbr-site-settings">
+										<div class="actnbr-site-settings__setting">
+											<span class="actnbr-site-settings__toggle">
+												<input class="actnbr-site-settings__toggle__input" id="toggle-input-notify-posts" type="checkbox"></input>
+												<span class="actnbr-site-settings__toggle__track"></span>
+												<span class="actnbr-site-settings__toggle__thumb"></span>
+											</span>
+											<label for="toggle-input-notify-posts" class="components-toggle-control__label">
+												Notify me of new posts											</label>
 										</div>
-										<input type="hidden" name="action" value="subscribe" />
-										<input type="hidden" name="blog_id" value="211228785" />
-										<input type="hidden" name="source" value="https://hrliangmath.org/home/" />
-										<input type="hidden" name="sub-type" value="actionbar-follow" />
-										<input type="hidden" id="_wpnonce" name="_wpnonce" value="1727fddc43" />										<div class="actnbr-button-wrap">
-											<button type="submit" value="Sign me up">
-												Sign me up											</button>
+										<p class="actnbr-site-settings__details">
+											Receive web and mobile notifications for new posts from this site.										</p>
+										<div class="actnbr-site-settings__setting">
+											<span class="actnbr-site-settings__toggle">
+												<input class="actnbr-site-settings__toggle__input" id="toggle-input-email-posts" type="checkbox"></input>
+												<span class="actnbr-site-settings__toggle__track"></span>
+												<span class="actnbr-site-settings__toggle__thumb"></span>
+											</span>
+											<label for="toggle-input-email-posts" class="components-toggle-control__label">
+												Email me new posts											</label>
 										</div>
-									</form>
-									<li class="actnbr-login-nudge">
-										<div>
-											Already have a WordPress.com account? <a href="https://wordpress.com/log-in?redirect_to=https%3A%2F%2Fr-login.wordpress.com%2Fremote-login.php%3Faction%3Dlink%26back%3Dhttps%253A%252F%252Fhrliangmath.org%252F2023%252F01%252F03%252Fwhats-new%252F">Log in now.</a>										</div>
-									</li>
+										<div class="actnbr-site-settings__details" id="email-new-posts-details">
+											<ul class="segmented-control" role="radiogroup">
+												<li class="segmented-control__item">
+													<a class="segmented-control__link frequency-instantly">Instantly</a>
+												</li>
+												<li class="segmented-control__item">
+													<a class="segmented-control__link frequency-daily">Daily</a>
+												</li>
+												<li class="segmented-control__item">
+													<a class="segmented-control__link frequency-weekly">Weekly</a>
+												</li>
+											</ul>
+										</div>
+										<div class="actnbr-site-settings__setting">
+											<span class="actnbr-site-settings__toggle">
+												<input class="actnbr-site-settings__toggle__input" id="toggle-input-email-comments" type="checkbox">
+												</input>
+												<span class="actnbr-site-settings__toggle__track"></span>
+												<span class="actnbr-site-settings__toggle__thumb"></span>
+											</span>
+											<label for="toggle-input-email-comments" class="components-toggle-control__label">
+												Email me new comments											</label>
+										</div>
+									</div>
 								</ul>
 															</div>
 						</div>
@@ -465,15 +448,17 @@ var WPGroHo = {"my_hash":""};
 			<svg class="gridicon gridicons-reader-following" height="24" width="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g><path d="M23 13.482L15.508 21 12 17.4l1.412-1.388 2.106 2.188 6.094-6.094L23 13.482zm-7.455 1.862L20 10.89V2H2v14c0 1.1.9 2 2 2h4.538l4.913-4.832 2.095 2.176zM8 13H4v-1h4v1zm3-2H4v-1h7v1zm0-2H4V8h7v1zm7-3H4V4h14v2z"/></g></svg><span>Following</span>
 		</a>
 										</li>
-																	<li class="actnbr-signup"><a href="https://wordpress.com/start/">Sign up</a></li>
-									<li class="actnbr-login"><a href="https://wordpress.com/log-in?redirect_to=https%3A%2F%2Fr-login.wordpress.com%2Fremote-login.php%3Faction%3Dlink%26back%3Dhttps%253A%252F%252Fhrliangmath.org%252F2023%252F01%252F03%252Fwhats-new%252F">Log in</a></li>
+																	<li class="actnbr-theme">
+										<a href="https://wordpress.com/theme/penscratch-2/">Get theme: Penscratch 2</a>
+									</li>
 																	<li class="flb-report"><a href="http://en.wordpress.com/abuse/">Report this content</a></li>
 																	<li class="actnbr-reader">
 										<a href="https://wordpress.com/read/feeds/135025859">
 											View site in Reader										</a>
 									</li>
-																	<li class="actnbr-subs">
-										<a href="https://subscribe.wordpress.com/">Manage subscriptions</a>
+																	<li class="actnbr-follows">
+										<a href="https://wordpress.com/following/manage?s=hrliangmath.org">
+											Manage subscriptions										</a>
 									</li>
 																		<li class="actnbr-fold"><a href="">Collapse this bar</a></li>
 															</ul>
@@ -498,7 +483,264 @@ window.addEventListener( "load", function( event ) {
 } );
 </script>
 
-	<script crossorigin='anonymous' type='text/javascript' src='https://s0.wp.com/_static/??-eJyVUMtuwzAM+6E5QoKuOQ37FttRUyV+QZbT9u+noBsQrKeeJIIiJRFuxficBJNAbKaENlOqsKAU69dfDIXz1LxQThC1C1hhF1kv5pI5wlJhr6bKQ7luqR9w8FV2wo08lvt/Sq4Y1aw0BwVT9WzFX82wS5LdaLb7zjdER/yGrK5UTKC06ju+VXOhl0sP4dgpUjLOMkRbBVk7I6xxvXz+p5ibQoc8K8MIW//ZDd0JXKMwgQtZkw7k2PLjiTROCjpHeOt0l9p+x6/+PI5j35+GcfkBKuehgg=='></script>
+	<script id='thickbox-js-extra'>
+var thickboxL10n = {"next":"Next >","prev":"< Prev","image":"Image","of":"of","close":"Close","noiframes":"This feature requires inline frames. You have iframes disabled or your browser does not support them.","loadingAnimation":"https:\/\/s0.wp.com\/wp-includes\/js\/thickbox\/loadingAnimation.gif"};
+</script>
+<script id='tos-report-form-js-extra'>
+var wpcom_tos_report_form = {"ajaxurl":"\/wp-admin\/admin-ajax.php","isLoggedoutUser":"","post_ID":null,"current_url":"https:\/\/hrliangmath.org\/home","report_this_content":"Report this content"};
+</script>
+<script crossorigin='anonymous' type='text/javascript' src='https://s0.wp.com/_static/??-eJyVUttOwzAM/SFSq9OgT4hvSVKvdZubnKTr/h4XtjGNCbGn+OhcIl/gmJSNoWAo4KtKrg4UMkxYkrbzGUPi2FdbKAbwUjnMsJm0LeoQ2cOUYXtVLifhmim/wE2usD0uZDGtF4qCdbWXGOHKSHY2cb0Wj0RjXJDpK09NufEUHql0L4Qymm8FD9q76oS30asf352njOglOlUDCUO2rIsd1W77K+iFBr3N5AnTLX7ClmdKylGYZdy2ZnWg9Y/uSsyKMUU+b+cO/2suXueCLJUqLIfwa6cXx1AFGuRBGEZY2tdm1+zBVHI9GBflhhwZ1nz6RnIo5ERHeDzv6MO/t29d17XtftdNn6nw8us='></script>
+
+	<div id="ab-reblog-box">
+		<form action="" name="reblog">
+			<textarea id="reblog-content" name="reblog-content" placeholder="Add your thoughts here... (optional)"></textarea>
+			<label for="blogid" id="lblogid">Post to</label>
+
+			<select name="to_blog_id" id="reblog-to-blog-id">
+														<option value="212082521">YanzhenxiangRobotics</option>
+							</select>
+
+			<div class="submit">
+				<span class="canceltext"><a href="" class="cancel">Cancel</a></span>
+				<input type="submit" name="reblog-submit" class="button-primary" id="reblog-submit" value="Reblog Post" />
+				<input type="hidden" id="original-blog-id" value="211228785" />
+				<input type="hidden" id="original-post-id" value="245" />
+			</div>
+
+			<input type="hidden" id="_wpnonce" name="_wpnonce" value="ed82987c50" /><input type="hidden" name="_wp_http_referer" value="/home/" />		</form>
+
+		<div class="arrow"></div>
+	</div>
+
+	<script type="text/javascript">
+		(function () {
+			function isVisible(selector) {
+				const el = document.querySelector(selector);
+				return el && getComputedStyle(el).getPropertyValue('display') !== 'none';
+			}
+
+			function hide(el) {
+				if (el && el.style) {
+					el.style.display = 'none';
+				}
+			}
+
+			function show(el) {
+				if (el && el.style) {
+					el.style.removeProperty('display');
+				}
+			}
+
+			function getValue(selector) {
+				const el = document.querySelector(selector);
+				return el ? el.value : undefined;
+			}
+
+			var wpcom_reblog = {
+				abortController: null,
+				source: 'toolbar',
+
+				init: function () {
+					document.addEventListener('click', e => {
+						// Click cancel reblog button
+						if (e.target.matches('#ab-reblog-box a.cancel')) {
+							e.preventDefault();
+							wpcom_reblog.cancel_reblog();
+							return;
+						}
+
+						// Submit reblog box
+						if (e.target.matches('#ab-reblog-box input[type=submit]')) {
+							e.preventDefault();
+							wpcom_reblog.submit_reblog(e.target);
+							return;
+						}
+					});
+				},
+
+				toggle_reblog_box_flair: function (obj_id, post_id) {
+					if (isVisible('#jp-post-flair #ab-reblog-box')) {
+						wpcom_reblog.cancel_reblog();
+					} else {
+						wpcom_reblog.show_reblog_box_flair(obj_id, post_id);
+					}
+				},
+
+				show_reblog_box_flair: function (obj_id, post_id) {
+					this.source = 'post_flair';
+					this.obj_id = obj_id;
+					const querySelector = '[name=like-post-frame-' + obj_id + ']'
+					return this.show_reblog_box_here(querySelector, 'body', post_id);
+				},
+
+				show_reblog_box_here: function (anchorId, parentId, post_id) {
+					const reblogBox = document.querySelector('#ab-reblog-box');
+					const anchor = document.querySelector(anchorId);
+					const parent = document.querySelector(parentId);
+					const originalPostId = document.querySelector('#original-post-id');
+
+					originalPostId.value = post_id;
+
+					if (!anchor || !parent || !reblogBox) {
+						return;
+					}
+
+					const anchorRect = anchor.getBoundingClientRect();
+					const offset = {
+						top: anchorRect.top + window.scrollY,
+						left: anchorRect.left + window.scrollX,
+					};
+
+					let left = `${offset.left}px`;
+					let width = '500px';
+					let position;
+					let top;
+
+					if (getComputedStyle(parent).getPropertyValue('position') === 'fixed') {
+						position = 'fixed';
+						const rect = parent.getBoundingClientRect();
+						top = `${rect.top + rect.height}px`;
+					} else {
+						position = 'absolute';
+						top = `${offset.top + anchorRect.height}px`;
+					}
+					reblogBox.remove();
+					parent.appendChild(reblogBox);
+					anchor.classList.add('selected');
+
+					if (window.innerWidth < offset.left + 500) {
+						// Most likely mobile or tablet
+						left = '0px';
+						width = `${window.innerWidth - 24}px`;
+					}
+
+					reblogBox.querySelectorAll('p.response').forEach(el => el.remove);
+					reblogBox.querySelectorAll('div.submit, div.submit span.canceltext').forEach(el => show(el));
+					reblogBox
+						.querySelectorAll('div.submit input[type=submit]')
+						.forEach(el => el.removeAttribute('disabled'));
+
+					reblogBox.style.display = 'block';
+					reblogBox.style.top = top;
+					reblogBox.style.left = left;
+					reblogBox.style.width = width;
+					reblogBox.style.position = position;
+					reblogBox.style.zIndex = 10; // slide under twentyfourteen's fixed-positioned masthead
+
+					// Ensure we can see the whole reblog box
+					if (CSS.supports('scroll-behavior', 'smooth')) {
+						reblogBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+					} else {
+						reblogBox.scrollIntoView();
+					}
+				},
+
+				submit_reblog: function (input) {
+					const reblogContext = this;
+
+					if (this.abortController) {
+						this.abortController.abort();
+					}
+
+					const controller = window.AbortController ? new AbortController() : null;
+					const signal = controller && controller.signal;
+
+					input.setAttribute('value', 'Reblogging...');
+					input.disabled = true;
+
+					const cancelText = document.querySelector('#ab-reblog-box div.submit span.canceltext');
+					hide(cancelText);
+					const spinner = document.createElement('span');
+					spinner.classList.add('spinner');
+					input.before(spinner);
+
+					let note = getValue('#ab-reblog-box textarea');
+					if (getValue('#default-reblog-note') === note) {
+						note = '';
+					}
+
+					const params = new URLSearchParams({
+						action: 'post_reblog',
+						original_blog_id: getValue('#original-blog-id'),
+						original_post_id: getValue('#original-post-id'),
+						blog_id: getValue('#ab-reblog-box select'),
+						note: note,
+						_wpnonce: getValue('#ab-reblog-box #_wpnonce'),
+						reblog_source: this.source,
+					});
+
+					const fetchOptions = {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+							'X-Requested-With': 'XMLHttpRequest',
+							Accept: 'application/json',
+							'cache-control': 'no-cache',
+							pragma: 'no-cache',
+						},
+					};
+
+					if (signal) {
+						fetchOptions.signal = signal;
+						this.abortController = controller;
+					}
+
+					fetch(`/wp-admin/admin-ajax.php?${params.toString()}`, fetchOptions)
+						.then(response => response.text())
+						.then(text => {
+							let result;
+							this.abortController = null;
+							try {
+								result = JSON.parse(text);
+							} catch (e) {
+								// Do nothing.
+							}
+							if (!result || !('type' in result)) {
+								throw new Error('Error: ' + text);
+							} else if (result.type === 'error') {
+								throw new Error(result.message);
+							} else {
+								const target = window.frames['likes-master'];
+								if (target && typeof target.postMessage === 'function') {
+									try {
+										target.postMessage(
+											JSON.stringify({
+												type: 'likesMessage',
+												data: { event: 'didReblog', obj_id: reblogContext.obj_id },
+											}),
+											'*'
+										);
+									} catch (err) {
+										// Do nothing.
+									}
+								}
+
+								hide(document.querySelector('#ab-reblog-box'));
+							}
+						})
+						.catch(err => {
+							if ( err && err.name === 'AbortError' ) {
+								// Request was aborted and a new one was started.
+							} else {
+								alert(err);
+								this.cancel_reblog();
+							}
+						})
+						.finally( () => {
+							input.setAttribute('value', 'Reblog');
+							spinner.remove();
+						});
+				},
+
+				cancel_reblog: function () {
+					hide(document.querySelector('#ab-reblog-box'));
+				},
+			};
+
+			window.wpcom_reblog = wpcom_reblog;
+			wpcom_reblog.init();
+		})();
+	</script>
 <script type="text/javascript">
 // <![CDATA[
 (function() {
@@ -519,13 +761,118 @@ try{
 </script><script src="//stats.wp.com/w.js?63" defer></script> <script type="text/javascript">
 _tkq = window._tkq || [];
 _stq = window._stq || [];
-_tkq.push(['storeContext', {'blog_id':'211228785','blog_tz':'1','user_lang':'en','blog_lang':'en','user_id':'0'}]);
-_stq.push(['view', {'blog':'211228785','v':'wpcom','tz':'1','user_id':'0','subd':'hrliangmath'}]);
-_stq.push(['extra', {'crypt':'UE40eW5QN0p8M2Y/RE1mNzc2NTVTamdsd0xoLz9RQkM2K298TXY9bERQMXc2MjhEaVZfb2wwakRoSj0mUkp1THptM1NdbkV1WjZIcU9mVWQmPUIvMlN6Jk8wW3NYVEJ3dWZOWExuWD98bDhscWI/elZKWDRzYkNyaD1XdFpoZW5WRXA1MFQ3aXlnbWN8Z0R2NTJ6P0tPRlZCc25kcFd1ZjYuXzV5NTkrNUhuTVBNcnJoWGY1fmdKNmJ3QTZRaCZ4SFBUTUUvWz9Hbj9WVVMzM3x4b3VRQm1mUFNxcXJQQkMlY1Jyczdfa05XaER8JlFGaEVaWVhPNSVxby1OQz9mUFhTP0ZHcmlxSjJFU0x6WXJ0Nnpv'}]);
+_tkq.push(['identifyUser', 227843546, 'nelson404notfound']);
+_tkq.push(['storeContext', {'blog_id':'211228785','blog_tz':'1','user_lang':'en','blog_lang':'en'}]);
+_stq.push(['view', {'blog':'211228785','v':'wpcom','tz':'1','user_id':'227843546','subd':'hrliangmath'}]);
+_stq.push(['extra', {'crypt':'UE40eW5QN0p8M2Y/RE1mNzc2NTVTamdsd0xoLz9RQkM2K298TXY9bERQMXc2MjhEaVZfb2wwakRoSj0mUkp1THptM1NdbkV1WjZIcU9mVWQmPUIvMlN6Jk8wW3NYVEJ3dWZOWExuWD98bDhscWI/elZKWDRzYkNyaD1XdFpoZW5WRXA1MFQ3aXlnbWN8Z0R2NTJ6P0tPRlZCc25kcFd1ZjYuXzV5NU9+dk5qaXUrTHhyfDNleGpGd0dyMzJUMlU0dWpdbWNCQWRfT3kvX104PXo0N2c3UVolZ1Z8SWtub05mYWQzWlQ/MEN1PVFJeS82MTFzRSZGamZkTUR8UlV4SnotZG5La20xUH50c1BdeG42a3RQ'}]);
 _stq.push([ 'clickTrackerInit', '211228785', '0' ]);
 	</script>
 <noscript><img src="https://pixel.wp.com/b.gif?v=noscript" style="height:1px;width:1px;overflow:hidden;position:absolute;bottom:1px;" alt="" /></noscript>
-<script defer id="bilmur" data-customproperties="{&quot;enq_jquery&quot;:&quot;1&quot;,&quot;logged_in&quot;:&quot;0&quot;,&quot;wptheme&quot;:&quot;pub\/penscratch-2&quot;}" data-provider="wordpress.com" data-service="simple"  src="/wp-content/js/bilmur.min.js?i=7&m=202309"></script><script>
+		<div id="wpadminbar" class="nojq nojs ltr nav-unification">
+							<a class="screen-reader-shortcut" href="#wp-toolbar" tabindex="1">Skip to toolbar</a>
+						<div class="quicklinks" id="wp-toolbar" role="navigation" aria-label="Toolbar" tabindex="0">
+						<ul id="wp-admin-bar-root-default" class="ab-top-menu">
+			
+		<li id="wp-admin-bar-blog" class="my-sites mb-trackable"><a class="ab-item"  href="https://wordpress.com/sites/yanzhenxiang-robotics.org">My Site</a>		</li>
+		<li id="wp-admin-bar-jumptotop-button-menu"><a class="ab-item"  href="#"><div id="jumptotop"><span class="noticon noticon-top"></span></div></a>		</li>
+		<li id="wp-admin-bar-newdash" class="mb-trackable"><a class="ab-item"  href="https://wordpress.com/read">Reader</a>		</li>		</ul>
+			<ul id="wp-admin-bar-top-secondary" class="ab-top-secondary ab-top-menu">
+			
+		<li id="wp-admin-bar-notes" class="menupop">		<div class="ab-item ab-empty-item" ><span id="wpnt-notes-unread-count" class="wpnt-loading wpn-read"></span><span class="noticon noticon-bell"></span><span class="ab-text">Notifications</span></div><div id="wpnt-notes-panel2" style="display:none" lang="en" dir="ltr"><div class="wpnt-notes-panel-header"><span class="wpnt-notes-header"></span><span class="wpnt-notes-panel-link"></span></div></div>		</li>
+		<li id="wp-admin-bar-my-account" class="with-avatar mb-trackable"><a class="ab-item"  href="https://wordpress.com/me/"><img alt='' src='https://1.gravatar.com/avatar/7da249f715c2213abcc1e95ef456b798?s=32&#038;d=mm&#038;r=G' class='avatar avatar-32' height='32' width='32' /><span class="ab-text">Me</span></a>		</li>
+		<li id="wp-admin-bar-ab-new-post" class="mb-trackable"><a class="ab-item"  href="https://wordpress.com/post/yanzhenxiang-robotics.org"><span>Write</span></a>		</li>		</ul>
+				</div>
+							<a class="screen-reader-shortcut" href="https://hrliangmath.wordpress.com/wp-login.php?action=logout&#038;_wpnonce=a2ea1ea153">Log Out</a>
+					</div>
+
+	
+<script type="text/javascript">
+/* <![CDATA[ */
+var clickDebugLink;
+
+jQuery(document).ready( function($) {
+	var single = false, w = 1000,
+		supe = false;
+
+	$(document.body).load(function(){ $('#wpadminbar img.grav-hashed').removeClass('grav-hashed'); }); // hack to hide the gravatar hovercard
+
+	if ( single && supe )
+		w = 1385;
+	else if ( supe )
+		w = 1200;
+
+	// debug bar extra
+	clickDebugLink = function( parent_id, obj ) {
+
+		$('#'+parent_id).children('div').hide();
+
+		document.getElementById( obj.href.substr( obj.href.indexOf( '#' ) + 1 ) ).style.display = 'block';
+		$( obj.href.substr( obj.href.indexOf( '#' ) ) ).show()
+
+		$(obj).parent().addClass('current').siblings('li').removeClass('current');
+
+		return false;
+	};
+
+	$( '#wpadminbar #wp-admin-bar-shortlink' ).click( function() {
+		$( '#adminbar-shortlink-input' ).select();
+	});
+
+	// skip tap-to-hover on site switcher for mobile
+	if ( 'ontouchstart' in window ) {
+		$('#wp-admin-bar-switch-site').on( 'touchstart', function( event ) {
+			if ( $( window ).width() > 782 ) {
+				return;
+			}
+			event.stopPropagation();
+			$( event.target ).first( 'a' ).click();
+		});
+	}
+
+});
+/* ]]> */
+</script>
+	<div class="wpcom-bubble action-bubble">
+		<div class="bubble-txt"></div>
+	</div>
+	<script type="text/javascript">function hideBubble() { jQuery('body').append( jQuery( 'div.wpcom-bubble' ).removeClass( 'fadein' ) ).off( 'click.bubble touchstart.bubble' ); jQuery(document).off( 'scroll.bubble' ); };</script>
+		<script type="text/javascript">
+	jQuery( '#wp-admin-bar-jumptotop-button-menu a' ).click( function( e ) {
+		e.preventDefault();
+		jQuery( 'html, body' ).animate( { scrollTop: 0 }, 'fast' );
+	} );
+	function hideShowTbJumpToTop() {
+		var total_width = 0;
+		// Calculate total width taken by items minus our button to see if it'll
+		// overlap with other toolbar menus.
+		jQuery( '#wp-admin-bar-root-default > li' ).each( function() {
+			var self = jQuery( this );
+			if ( 'wp-admin-bar-jumptotop-button-menu' != self.attr( 'id' ) )
+				total_width += self.width();
+		});
+		if ( jQuery( '#wp-admin-bar-jumptotop-button-menu' ).position()['left'] - total_width < 10 ) {
+			jQuery( '#jumptotop' ).animate( { 'top': '-50px' }, 'fast' );
+		} else if (  jQuery( window ).scrollTop() >= 350 && parseInt( jQuery( '#jumptotop' ).css( 'top' ) ) < 0 ) {
+			if ( jQuery( '#wp-admin-bar-jumptotop-button-menu' ).position()['left'] - total_width < 10 )
+			   return;
+			jQuery( '#jumptotop' ).animate( { 'top': 0 }, 'fast' );
+		} else if (  jQuery( window ).scrollTop() < 1 && parseInt( jQuery( '#jumptotop' ).css( 'top' ) ) >= 0 ) {
+			jQuery( '#jumptotop' ).animate( { 'top': '-50px' }, 'fast' );
+		}
+	}
+	// handle on page load if auto scrolling to a position
+	hideShowTbJumpToTop();
+	// bind to scrolll event
+	var jumpToTopTimer = null;
+	jQuery( window ).scroll( function() {
+		clearTimeout( jumpToTopTimer );
+		jumpToTopTimer = setTimeout( jumpToTopRefresh, 150 );
+	} );
+	var jumpToTopRefresh = function() {
+		hideShowTbJumpToTop();
+	};
+	</script>
+	<script>
 if ( 'object' === typeof wpcom_mobile_user_agent_info ) {
 
 	wpcom_mobile_user_agent_info.init();
